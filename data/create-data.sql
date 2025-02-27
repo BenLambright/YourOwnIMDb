@@ -6,7 +6,7 @@ CREATE TABLE MotionPicture(
     budget INT
 );
 
-CREATE TABLE User(
+CREATE TABLE Users(
     email VARCHAR(100) NOT NULL PRIMARY KEY,
     name VARCHAR(100), 
     age INT
@@ -16,7 +16,7 @@ CREATE TABLE Likes(
     uemail VARCHAR(100) NOT NULL,
     mpid INT NOT NULL,
     PRIMARY KEY (uemail, mpid),
-    FOREIGN KEY (uemail) REFERENCES User(email)
+    FOREIGN KEY (uemail) REFERENCES Users(email)
         ON DELETE CASCADE,
     FOREIGN KEY (mpid) REFERENCES MotionPicture(id)
         ON DELETE CASCADE
@@ -74,7 +74,7 @@ CREATE TABLE Genre(
     );
 
 CREATE TABLE Location(
-    mpid INT NOT NULL UNIQUE,
+    mpid INT NOT NULL,
     zip INT NOT NULL,
     city varchar(100),
     country varchar(100),
