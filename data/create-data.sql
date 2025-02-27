@@ -74,7 +74,7 @@ CREATE TABLE Genre(
     );
 
 CREATE TABLE Location(
-    mpid INT NOT NULL,
+    mpid INT NOT NULL UNIQUE,
     zip INT NOT NULL,
     city varchar(100),
     country varchar(100),
