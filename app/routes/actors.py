@@ -11,7 +11,8 @@ def view_all_actors():
     # >>>> TODO 1: Write a query that fetches all actors from `People` <<<<
     #              The query should retrieve `name`, `nationality`, `dob`, and `gender`.
 
-    query = """ """
+    query = """select p.name, p.nationality, p.dob, p.gender 
+                from people p """
 
     with Database() as db:
         actors = db.execute(query=query)
