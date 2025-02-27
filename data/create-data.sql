@@ -36,7 +36,7 @@ CREATE TABLE Series(
         ON DELETE CASCADE
 );
 CREATE TABLE People (
-    id INT NOT NULL,   
+    id INT NOT NULL PRIMARY KEY,   
     name VARCHAR(100),   
     nationality VARCHAR(100),   
     dob DATE,   
@@ -49,10 +49,11 @@ CREATE TABLE Role(
      role_name varchar(100) NOT NULL,
      PRIMARY KEY (mpid, pid, role_name),
      FOREIGN KEY (mpid) REFERENCES MotionPicture(id)
-         ON DELETE CASCADE,
+        ON DELETE CASCADE,
      FOREIGN KEY (pid) REFERENCES People(id)
          ON DELETE CASCADE
      );
+
 create table Award(
     mpid int not null,  
     pid int not null, 
