@@ -3,20 +3,20 @@ from app.database import Database
 
 queries_bp = Blueprint("query", __name__)
 
-
+# Query 1
 @queries_bp.route("/list_tables")
 def list_tables():
     """List all tables in the database."""
 
     # >>>> TODO 1: Write a query to list all the tables in the database. <<<<
 
-    query = """ """
+    query = """show tables;"""
 
     with Database() as db:
         tables = db.execute(query)
     return render_template("list_tables.html", tables=tables)
 
-
+# Query 2
 @queries_bp.route("/search_movie", methods=["POST"])
 def search_movie():
     """Search for movies by name."""
@@ -36,11 +36,14 @@ def search_movie():
 def search_liked_movies():
     """Search for movies liked by a specific user."""
     user_email = request.form["user_email"]
+    assert(type(user_email)==str)
 
     # >>>> TODO 3: Find the movies that have been liked by a specific user’s email. <<<<
     #              List the movie `name`, `rating`, `production` and `budget`.
 
-    query = """ """
+    query = """ SELECT mp.name, mp.rating, mp.production, mp.budget
+                FROM MotionPicture mp, Likes l
+                WHERE l.uemail = %s AND l.mpid = mp.id"""
 
     with Database() as db:
         movies = db.execute(query, (user_email,))
@@ -70,8 +73,16 @@ def search_directors_by_zip():
     # >>>> TODO 5: List all directors who have directed TV series shot in a specific zip code. <<<<
     #              List the director name and TV series name only without duplicates.
 
-    query = """ """
-
+    query = """SELECT DISTINCT P.name, MP.name 
+                FROM People P JOIN Role R on P.id = R.pid 
+                JOIN MotionPicture MP on R.mpid = MP.id 
+                WHERE R.role_name = "director" 
+                and R.mpid IN (
+                            SELECT L.mpid 
+                            FROM Location L Join Series S 
+                                ON L.mpid = S.mpid 
+                            WHERE L.zip = %s); """
+    
     with Database() as db:
         results = db.execute(query, (zip_code,))
     return render_template("search_directors_results.html", results=results)
@@ -116,7 +127,29 @@ def find_youngest_oldest_actors():
     #              The age should be computed from the person’s date of birth to the award winning year only. 
     #              In case of a tie, list all of them.
 
-    query = """ """
+    query = """
+            SELECT P.name, A.award_year - YEAR(P.dob) AS age
+            FROM Award A
+            JOIN People P ON P.id = A.pid
+            JOIN Role R ON P.id = R.pid
+            WHERE R.role_name = 'actor'
+            AND (A.award_year - YEAR(P.dob) = (
+                SELECT MIN(A2.award_year - YEAR(P2.dob))
+                FROM Award A2
+                JOIN People P2 ON P2.id = A2.pid
+                JOIN Role R2 ON P2.id = R2.pid
+                WHERE R2.role_name = 'actor'
+            )
+            OR A.award_year - YEAR(P.dob) = (
+                SELECT MAX(A3.award_year - YEAR(P3.dob))
+                FROM Award A3
+                JOIN People P3 ON P3.id = A3.pid
+                JOIN Role R3 ON P3.id = R3.pid
+                WHERE R3.role_name = 'actor'
+            ));
+
+
+             """
 
     with Database() as db:
         actors = db.execute(query)
@@ -176,7 +209,14 @@ def search_multiple_roles():
     # >>>> TODO 9: List the people who have played multiple roles in a motion picture where the rating is more than “X”. <<<<
     #              List the person’s `name`, `motion picture name` and `count of number of roles` for that particular motion picture.
 
-    query = """ """
+    query = """SELECT P.name, MP.name, COUNT(DISTINCT R.role_name) AS role_count
+                FROM MotionPicture MP
+                JOIN Role R ON MP.id = R.mpid
+                JOIN People P ON P.id = R.pid 
+                WHERE MP.rating > %s
+                GROUP BY P.name, MP.name
+                HAVING COUNT(DISTINCT R.role_name) > 1;
+                """
 
     with Database() as db:
         results = db.execute(query, (rating_threshold,))
@@ -223,7 +263,12 @@ def search_movies_by_likes():
     # >>>> TODO 11: Find all the movies with more than “X” likes by users of age less than “Y”. <<<<
     #               List the movie names and the number of likes by those age-group users.
 
-    query = """ """
+    query = """ SELECT MP.name, Count(L.uemail)
+                FROM MotionPicture MP JOIN Movie M ON MP.id = M.mpid 
+                 JOIN Likes L ON MP.id = L.mpid JOIN Users U ON U.email = L.uemail 
+                WHERE U.age> %s
+                GROUP BY MP.name
+                HAVING Count(L.uemail)>%s"""
 
     with Database() as db:
         results = db.execute(query, (max_age, min_likes))
@@ -275,7 +320,15 @@ def movies_higher_than_comedy_avg():
     # >>>> TODO 13: Find the motion pictures that have a higher rating than the average rating of all comedy (genre) motion pictures. <<<<
     #               Show the names and ratings in descending order of ratings.
 
-    query = """ """
+    query = """
+                SELECT MP.name, MP.rating
+                FROM MotionPicture MP
+                WHERE MP.rating > (SELECT AVG(DISTINCT MP.rating)
+                                    FROM MotionPicture MP JOIN Genre G 
+                                    ON MP.id = G.mpid
+                                    WHERE G.genre_name = "comedy")
+                ORDER BY MP.rating DESC;
+            """
 
     with Database() as db:
         results = db.execute(query)
@@ -317,7 +370,13 @@ def actors_with_common_birthday():
     # >>>> TODO 15: Find actors who share the same birthday. <<<<
     #               List the actor names (actor 1, actor 2) and their common birthday.
 
-    query = """ """
+    query = """ SELECT DISTINCT P1.name AS actor_1, P2.name AS actor_2, P1.dob AS shared_dob
+                FROM People P1 JOIN People P2 
+                    ON P1.dob = P2.dob AND P1.id < P2.id JOIN Role R1 
+                    ON P1.id = R1.pid JOIN Role R2 
+                    ON P2.id = R2.pid
+                WHERE R1.role_name = 'actor' AND R2.role_name = 'actor';
+                """
 
     with Database() as db:
         results = db.execute(query)
