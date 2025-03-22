@@ -3,8 +3,9 @@ CREATE TABLE MotionPicture(
     name VARCHAR(100), 
     rating INT,
     production VARCHAR(100), 
-    budget INT
+    budget BIGINT
 );
+-- Because this was originally INT, I had to run the command ALTER TABLE MotionPicture MODIFY COLUMN budget BIGINT;
 
 CREATE TABLE Users(
     email VARCHAR(100) NOT NULL PRIMARY KEY,
